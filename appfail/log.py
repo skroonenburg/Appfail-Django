@@ -2,6 +2,8 @@ import logging
 import traceback
 import json
 from datetime import datetime
+import uuid
+from socket import gethostname
 
 from django.conf import settings
 from django.views.debug import ExceptionReporter, get_exception_reporter_filter
@@ -62,10 +64,10 @@ class AppFailHandler(logging.Handler):
         send['ApplicationType'] = "Python/Django"
         send['OccurrenceTimeUtc'] = datetime.utcnow().strftime("%m/%d/%Y %H:%M:%S.%f")
         send['User'] = record.request.user.username
-        send['PostValuePairs'] = ""
-        send['QueryValuePairs'] = ""
-        send['ServerVariable'] = ""
-        send['Cookies'] = ""
-        send['UniqueId'] = ""
+        send['PostValuePairs'] = record.request.POST
+        send['QueryValuePairs'] = record.request.GET
+        send['ServerVariable'] = record.request.session,
+        send['Cookies'] = record.request.COOKIES
+        send['UniqueId'] = uuid.uuid1()         # check if this is OK
         send['UserAgent'] = record.request.META.get("HTTP_USER_AGENT")
-        send['MachineName'] = ""
+        send['MachineName'] = gethostname()
