@@ -2,6 +2,7 @@ import logging
 import traceback
 
 import json
+import urllib2
 import uuid
 from datetime import datetime
 from socket import gethostname
@@ -28,33 +29,48 @@ class AppFailHandler(logging.Handler):
     http://support.appfail.net/kb/rest-api-for-reporting-failures/documentation-of-submission-format-version-1
     """
     
-    def __init__(self, api_key="dYCk5eQl6MK7DlA7c2cLVQ"):
+    def __init__(self, api_key="dYCk5eQl6MK7DlA7c2cLVQ", api_url="https://appfail.net/Fail"):
         logging.Handler.__init__(self)
         self.api_key = api_key
+        self.api_url = api_url
     
     def emit(self, record):
-        send = {}
+        occurrence = {}
     
         if record.exc_info:
             stack_trace = traceback.format_exc(record.exc_info)
         else:
             stack_trace = "No stack trace available"
         
-        send['ExceptionType'] = record.getMessage()
-        send['StackTrace'] = stack_trace
-        send['HttpVerb'] = record.request.method
-        send['ReferrerUrl'] = record.request.META.get('HTTP_REFERER')
-        send['ExceptionMessage'] = ""
-        send['RelativeUrl'] = record.request.build_absolute_uri()
-        send['ApplicationType'] = "Python/Django"
-        send['OccurrenceTimeUtc'] = datetime.utcnow().strftime("%m/%d/%Y %H:%M:%S.%f")
-        send['User'] = record.request.user.username
-        send['PostValuePairs'] = record.request.POST
-        send['QueryValuePairs'] = record.request.GET
-        send['ServerVariable'] = record.request.session.items(),
-        send['Cookies'] = record.request.COOKIES
-        send['UniqueId'] = str(uuid.uuid1())         # check if this is OK
-        send['UserAgent'] = record.request.META.get("HTTP_USER_AGENT")
-        send['MachineName'] = gethostname()
-    
-        print json.dumps(send)        
+        occurrence['ExceptionType'] = record.getMessage()
+        occurrence['StackTrace'] = stack_trace
+        occurrence['HttpVerb'] = record.request.method
+        occurrence['ReferrerUrl'] = record.request.META.get('HTTP_REFERER')
+        occurrence['ExceptionMessage'] = ""
+        occurrence['RelativeUrl'] = record.request.build_absolute_uri()
+        
+        # ApplicationType must be set to ASP.NET to be accepted by the server
+        occurrence['ApplicationType'] = "ASP.NET"         # change to Django on deploy
+        
+        occurrence['OccurrenceTimeUtc'] = datetime.utcnow().strftime("%m/%d/%Y %H:%M:%S.%f")
+        occurrence['User'] = record.request.user.username
+        occurrence['PostValuePairs'] = [record.request.POST.keys(), record.request.POST.values()]
+        occurrence['QueryValuePairs'] = [record.request.GET.keys(), record.request.GET.values()]
+        occurrence['ServerVariable'] = record.request.session.items(),
+        occurrence['Cookies'] = [record.request.COOKIES.keys(), record.request.COOKIES.values()]
+        occurrence['UniqueId'] = str(uuid.uuid1())         # check if this is OK
+        occurrence['UserAgent'] = record.request.META.get("HTTP_USER_AGENT")
+        occurrence['MachineName'] = gethostname()
+        
+        data = {}
+        data['ApiToken'] = self.api_key
+        data['FailureOccurrences'] = [occurrence]
+        
+        print json.dumps(data)
+        
+        #req = urllib2.Request(self.api_url, json.dumps(data), {'Content-Type': 'application/json', "x-appfail-version": "1"})
+        #f = urllib2.urlopen(req)
+        #res = f.read()
+        #f.close()
+        
+        #print res
