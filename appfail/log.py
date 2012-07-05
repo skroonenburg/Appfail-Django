@@ -50,14 +50,14 @@ class AppFailHandler(logging.Handler):
         occurrence['RelativeUrl'] = record.request.build_absolute_uri()
         
         # ApplicationType must be set to ASP.NET to be accepted by the server
-        occurrence['ApplicationType'] = "ASP.NET"         # change to Django on deploy
+        occurrence['ApplicationType'] = "Django"         # change to Django on deploy
         
         occurrence['OccurrenceTimeUtc'] = datetime.utcnow().strftime("%m/%d/%Y %H:%M:%S.%f")
         occurrence['User'] = record.request.user.username
-        occurrence['PostValuePairs'] = [record.request.POST.keys(), record.request.POST.values()]
-        occurrence['QueryValuePairs'] = [record.request.GET.keys(), record.request.GET.values()]
-        occurrence['ServerVariable'] = record.request.session.items(),
-        occurrence['Cookies'] = [record.request.COOKIES.keys(), record.request.COOKIES.values()]
+        occurrence['PostValuePairs'] = record.request.POST
+        occurrence['QueryValuePairs'] = record.request.GET
+        occurrence['ServerVariable'] = record.request.session.items()
+        occurrence['Cookies'] = record.request.COOKIES
         occurrence['UniqueId'] = str(uuid.uuid1())         # check if this is OK
         occurrence['UserAgent'] = record.request.META.get("HTTP_USER_AGENT")
         occurrence['MachineName'] = gethostname()
