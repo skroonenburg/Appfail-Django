@@ -73,26 +73,36 @@ class AppFailHandler(logging.Handler):
         
         data = {}
         data['ApiToken'] = self.api_key
-        data['ApplicationType'] = "Python"          # ApplicationType for Python has been added
+        data['ApplicationType'] = "Django"          # ApplicationType for Python has been added
         data['ModuleVersion'] = "0.0.0.1"
-        data['FailureOccurrences'] = [occurrence]
-        
-        if self.verbose:
-            print json.dumps(data, sort_keys=True, indent=4)
+        data['FailOccurrences'] = [occurrence]
         
         req = urllib2.Request(self.api_url, data=json.dumps(data), headers = {
-                'content-type': 'application/json', 
+                "content-type": "application/json", 
                 "x-appfail-version": 2,
                 "user-agent": "AppFail Django Reporting Module/0.1"
             })
         
-        if "favicon" not in occurrence['RequestUrl']:
-            f = urllib2.urlopen(req)
-            res = f.read()
-            f.close()
         
-            if self.verbose:
-                print "Our header: %s" % req.header_items()
-                print "Server response: %s:" % f.info()
-                print res
-    
+        if self.verbose:
+            print "SENDING JSON"
+            print "URL: ", self.api_url
+            print json.dumps(data, sort_keys=True, indent=4)
+            print "\n--------------------------------------------------"
+            
+        if "favicon" not in occurrence['RequestUrl']:
+            try:
+                f = urllib2.urlopen(req)
+                res = f.read()
+                f.close()
+            
+                if self.verbose:
+                    print "Our header: %s" % req.header_items()
+                    print "Server response: %s:" % f.info()
+                    print res
+            
+            except urllib2.HTTPError, e:
+                print "SERVER ERROR:"
+                print str(e)
+                print e.read()
+                print "\n--------------------------------------------------"
