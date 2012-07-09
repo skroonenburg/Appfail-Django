@@ -111,32 +111,6 @@ class AppFailHandler(logging.Handler):
         occurrence['UserAgent'] = record.request.META.get("HTTP_USER_AGENT")
         occurrence['MachineName'] = gethostname()
         
-<<<<<<< HEAD
-        # ok, add this to the database as a new CachedOccurrence object
-        co = CachedOccurrence()
-        co.failure_json = json.dumps(occurrence)
-        co.reported = False
-        co.save()
-        
-        """
-        Pseudo:
-            If there are no other errors from the last minute, send this error and any unsent
-            If there are other errors from the last minutes, and no unsent records older than a minute, save and wait
-            If there are other errors from the last minute, and the are unsent records old than a minute, send all unsent
-        """
-        now = datetime.now()
-        now_t1 = now - timedelta(minutes=1)
-        
-        unsent = CachedOccurrence.objects.filter(reported=False)
-        if len(unsent) > 1:
-            if CachedOccurrence.objects.filter(reported=False, time__lt=now_t1).count() == 0:
-                pass
-            else:
-                self.send_records(unsent)
-        # the only unsent record is our new one, send it
-        else:
-            self.send_records(unsent)
-=======
         data = {}
         data['ApiToken'] = self.api_key
         data['ApplicationType'] = "Python"          # ApplicationType for Python has been added
@@ -161,5 +135,3 @@ class AppFailHandler(logging.Handler):
                 print "Our header: %s" % req.header_items()
                 print "Server response: %s:" % f.info()
                 print res
-    
->>>>>>> parent of 8703e6c... Model for caching
