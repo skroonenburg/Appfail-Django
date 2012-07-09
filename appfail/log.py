@@ -8,6 +8,7 @@ from datetime import datetime
 from socket import gethostname
 
 from django.views.debug import ExceptionReporter, get_exception_reporter_filter
+from appfail.models import CachedOccurrence
 
 # Make sure that dictConfig is available
 # This was added in Python 2.7/3.2
@@ -28,7 +29,7 @@ class AppFailHandler(logging.Handler):
     http://support.appfail.net/kb/rest-api-for-reporting-failures/documentation-of-submission-format-version-2
     """
     
-    def __init__(self, api_key="dYCk5eQl6MK7DlA7c2cLVQ", api_url="https://api.appfail.net/Fail", verbose=True):
+    def __init__(self, api_key="dYCk5eQl6MK7DlA7c2cLVQ", api_url="https://api.appfail.net/Fail", verbose=False):
         logging.Handler.__init__(self)
         self.api_key = api_key
         self.api_url = api_url
@@ -70,29 +71,40 @@ class AppFailHandler(logging.Handler):
         occurrence['UserAgent'] = record.request.META.get("HTTP_USER_AGENT")
         occurrence['MachineName'] = gethostname()
         
+        # ok, add this to the database as a new CachedOccurrence object
+        co = CachedOccurrence()
+        co.failure_json = json.dumps(occurrence)
+        co.reported = False
+        
+        
+        
         data = {}
         data['ApiToken'] = self.api_key
-        data['ApplicationType'] = "Django"          # ApplicationType for Python has been added
+        data['ApplicationType'] = "Django"          # ApplicationType for Django has been added
         data['ModuleVersion'] = "0.0.0.1"
-        data['FailureOccurrences'] = [occurrence]
-        
-        
-        if "favicon" not in occurrence['RequestUrl']:
-            if self.verbose:
-                print json.dumps(data, sort_keys=True, indent=4)
-        
-            req = urllib2.Request(self.api_url, data=json.dumps(data), headers = {
-                'content-type': 'application/json', 
                 "x-appfail-version": 2,
                 "user-agent": "AppFail Django Reporting Module/0.1"
             })
         
-            f = urllib2.urlopen(req)
-            res = f.read()
-            f.close()
-        
-            if self.verbose:
-                print "Our header: %s" % req.header_items()
-                print "Server response: %s:" % f.info()
-                print res
-    
+        if self.verbose:
+            print "SENDING JSON"
+            print "URL: ", self.api_url
+            print json.dumps(data, sort_keys=True, indent=4)
+            print "\n--------------------------------------------------"
+            
+        if "favicon" not in occurrence['RequestUrl']:
+            try:
+                f = urllib2.urlopen(req)
+                res = f.read()
+                f.close()
+            
+                if self.verbose:
+                    print "Our header: %s" % req.header_items()
+                    print "Server response: %s:" % f.info()
+                    print res
+            
+            except urllib2.HTTPError, e:
+                print "SERVER ERROR:"
+                print str(e)
+                print e.read()
+                print "\n--------------------------------------------------"
