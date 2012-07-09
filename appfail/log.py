@@ -24,8 +24,8 @@ class AppFailHandler(logging.Handler):
     """
     An exception log handle that logs errors to AppFail.net
     
-    Compatible with the AppFail REST API v1:
-    http://support.appfail.net/kb/rest-api-for-reporting-failures/documentation-of-submission-format-version-1
+    Compatible with the AppFail REST API v2:
+    http://support.appfail.net/kb/rest-api-for-reporting-failures/documentation-of-submission-format-version-2
     """
     
     def __init__(self, api_key="dYCk5eQl6MK7DlA7c2cLVQ", api_url="https://api.appfail.net/Fail", verbose=True):
@@ -61,7 +61,6 @@ class AppFailHandler(logging.Handler):
         occurrence['ReferrerUrl'] = record.request.META.get('HTTP_REFERER', '')
         occurrence['OccurrenceTimeUtc'] = datetime.utcnow().strftime("%m/%d/%Y %H:%M:%S.%f")
         occurrence['User'] = record.request.user.username
-        
         occurrence['PostValuePairs'] = record.request.POST.items()
         occurrence['QueryValuePairs'] = record.request.GET.items()
         occurrence['ServerVariable'] = record.request.session.items()
@@ -73,20 +72,21 @@ class AppFailHandler(logging.Handler):
         
         data = {}
         data['ApiToken'] = self.api_key
-        data['ApplicationType'] = "Python"          # ApplicationType for Python has been added
+        data['ApplicationType'] = "Django"          # ApplicationType for Python has been added
         data['ModuleVersion'] = "0.0.0.1"
         data['FailureOccurrences'] = [occurrence]
         
-        if self.verbose:
-            print json.dumps(data, sort_keys=True, indent=4)
         
-        req = urllib2.Request(self.api_url, data=json.dumps(data), headers = {
+        if "favicon" not in occurrence['RequestUrl']:
+            if self.verbose:
+                print json.dumps(data, sort_keys=True, indent=4)
+        
+            req = urllib2.Request(self.api_url, data=json.dumps(data), headers = {
                 'content-type': 'application/json', 
                 "x-appfail-version": 2,
                 "user-agent": "AppFail Django Reporting Module/0.1"
             })
         
-        if "favicon" not in occurrence['RequestUrl']:
             f = urllib2.urlopen(req)
             res = f.read()
             f.close()
