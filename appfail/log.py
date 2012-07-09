@@ -111,6 +111,7 @@ class AppFailHandler(logging.Handler):
         occurrence['UserAgent'] = record.request.META.get("HTTP_USER_AGENT")
         occurrence['MachineName'] = gethostname()
         
+<<<<<<< HEAD
         # ok, add this to the database as a new CachedOccurrence object
         co = CachedOccurrence()
         co.failure_json = json.dumps(occurrence)
@@ -135,3 +136,30 @@ class AppFailHandler(logging.Handler):
         # the only unsent record is our new one, send it
         else:
             self.send_records(unsent)
+=======
+        data = {}
+        data['ApiToken'] = self.api_key
+        data['ApplicationType'] = "Python"          # ApplicationType for Python has been added
+        data['ModuleVersion'] = "0.0.0.1"
+        data['FailureOccurrences'] = [occurrence]
+        
+        if self.verbose:
+            print json.dumps(data, sort_keys=True, indent=4)
+        
+        req = urllib2.Request(self.api_url, data=json.dumps(data), headers = {
+                'content-type': 'application/json', 
+                "x-appfail-version": 2,
+                "user-agent": "AppFail Django Reporting Module/0.1"
+            })
+        
+        if "favicon" not in occurrence['RequestUrl']:
+            f = urllib2.urlopen(req)
+            res = f.read()
+            f.close()
+        
+            if self.verbose:
+                print "Our header: %s" % req.header_items()
+                print "Server response: %s:" % f.info()
+                print res
+    
+>>>>>>> parent of 8703e6c... Model for caching

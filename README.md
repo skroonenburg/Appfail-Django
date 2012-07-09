@@ -7,6 +7,7 @@ See this page for more information:
 http://appfail.net/OtherPlatforms
 
 The REST API for Appfail is documented here:
+<<<<<<< HEAD
 http://support.appfail.net/kb/rest-api-for-reporting-failures/rest-api-documentation-for-failure-reporting
 
 
@@ -42,3 +43,6 @@ Setup
     },
 }
 ```
+=======
+http://support.appfail.net/kb/rest-api-for-reporting-failures/rest-api-documentation-for-failure-reporting
+>>>>>>> parent of 8703e6c... Model for caching
