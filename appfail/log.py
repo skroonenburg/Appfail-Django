@@ -34,45 +34,6 @@ class AppFailHandler(logging.Handler):
         self.api_key = api_key
         self.api_url = api_url
         self.verbose = verbose
-    
-    def send_failures(self, records):
-        data = {}
-        data['ApiToken'] = self.api_key
-        data['ApplicationType'] = "Django"          # ApplicationType for Django has been added
-        data['ModuleVersion'] = "0.0.0.1"
-             
-        occurrences = []
-        for r in records:
-            occurrences.append(json.loads(r.failure_json))
-            
-        data['FailOccurrences'] = occurrences
-        
-        if self.verbose:
-            print "SENDING JSON"
-            print "URL: ", self.api_url
-            print json.dumps(data, sort_keys=True, indent=4)
-            print "\n--------------------------------------------------"
-
-        try:
-            req = Requst(self.api_url, data=data, headers=({
-               "content-type": "application/json",
-               "x-appfail-version": 2,
-               "user-agent": "AppFail Django Reporting Module/0.1"
-            }))
-            f = urllib2.urlopen(req)
-            res = f.read()
-            f.close()
-        
-            if self.verbose:
-                print "Our header: %s" % req.header_items()
-                print "Server response: %s:" % f.info()
-                print res
-        
-        except urllib2.HTTPError, e:
-            print "SERVER ERROR:"
-            print str(e)
-            print e.read()
-            print "\n--------------------------------------------------"
         
         
     def emit(self, record):
@@ -113,20 +74,22 @@ class AppFailHandler(logging.Handler):
         
         data = {}
         data['ApiToken'] = self.api_key
-        data['ApplicationType'] = "Python"          # ApplicationType for Python has been added
+        data['ApplicationType'] = "Django"          # ApplicationType for Django has been added
         data['ModuleVersion'] = "0.0.0.1"
-        data['FailureOccurrences'] = [occurrence]
+        data['FailOccurrences'] = [occurrence]
         
         if self.verbose:
+            print "SENDING JSON"
+            print "URL: ", self.api_url
             print json.dumps(data, sort_keys=True, indent=4)
-        
-        req = urllib2.Request(self.api_url, data=json.dumps(data), headers = {
-                'content-type': 'application/json', 
-                "x-appfail-version": 2,
-                "user-agent": "AppFail Django Reporting Module/0.1"
-            })
-        
-        if "favicon" not in occurrence['RequestUrl']:
+            print "\n--------------------------------------------------"
+
+        try:
+            req = Requst(self.api_url, data=data, headers=({
+               "content-type": "application/json",
+               "x-appfail-version": 2,
+               "user-agent": "AppFail Django Reporting Module/0.1"
+            }))
             f = urllib2.urlopen(req)
             res = f.read()
             f.close()
@@ -135,3 +98,9 @@ class AppFailHandler(logging.Handler):
                 print "Our header: %s" % req.header_items()
                 print "Server response: %s:" % f.info()
                 print res
+        
+        except urllib2.HTTPError, e:
+            print "SERVER ERROR:"
+            print str(e)
+            print e.read()
+            print "\n--------------------------------------------------"
