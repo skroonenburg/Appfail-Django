@@ -19,23 +19,26 @@ Please do not use this reporting module outside of testing environments
 Setup
 =====
 
-- Check the repository out into your Django project
+- Clone the repository into your Django project
+- Add 'appfail' to your INSTALLED_APPS
 - Amend the default LOGGING variable in your settings.py
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'mail_admins': {
-            'level': 'ERROR',
-            'class': 'django.utils.log.AdminEmailHandler'
-        }
-    },
-    'loggers': {
-        'django.request': {
-            'handlers': ['mail_admins'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
+```python
+# add the appfail handler
+'handlers': {
+    'appfail': {
+        'level': 'ERROR',
+        'class': 'appfail.log.AppFailHandler',
     }
+},
+
+# enable the appfail logger
+'loggers': {
+    'django.request': {
+        'handlers': ['appfail'],
+        'level': 'ERROR',
+        'api_key': 'YOUR_API_KEY',
+        'propagate': True,
+    },
 }
+```
